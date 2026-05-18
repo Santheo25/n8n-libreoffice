@@ -1,8 +1,8 @@
-FROM n8nio/n8n:1.91.3
+FROM node:20-bookworm-slim
 
 USER root
 
-# Instala LibreOffice + dependências
+# Dependências do sistema + LibreOffice
 RUN apt-get update && apt-get install -y \
     libreoffice \
     libreoffice-writer \
@@ -16,22 +16,23 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Diretórios temporários
-RUN mkdir -p /tmp/libreoffice-profile \
+# Instala n8n
+RUN npm install -g n8n
+
+# Diretórios
+RUN mkdir -p /data \
+    /tmp/libreoffice-profile \
     /tmp/convert && \
     chmod -R 777 /tmp
 
-# Configuração estável do LibreOffice headless
-ENV HOME=/home/node
-ENV USER=node
+# Variáveis
+ENV N8N_PORT=5678
+ENV N8N_HOST=0.0.0.0
+ENV HOME=/root
 ENV XDG_CONFIG_HOME=/tmp/libreoffice-profile
 ENV TMPDIR=/tmp/convert
 ENV SAL_USE_VCLPLUGIN=gen
 ENV TZ=America/Sao_Paulo
-
-RUN chown -R node:node /home/node
-
-USER node
 
 EXPOSE 5678
 
