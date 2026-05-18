@@ -1,45 +1,34 @@
 # ==========================================================
-# n8n + LibreOffice otimizado para Railway
-# DOCX -> PDF (headless)
+# n8n + LibreOffice (Debian)
+# Otimizado para Railway + DOCX -> PDF
 # ==========================================================
 
 FROM n8nio/n8n:latest
 
 USER root
 
-# Atualiza repositórios
-RUN apk update && apk upgrade
-
-# ----------------------------------------------------------
-# Dependências essenciais
-# ----------------------------------------------------------
-RUN apk add --no-cache \
+# Atualiza sistema e instala dependências
+RUN apt-get update && apt-get install -y \
     libreoffice \
     libreoffice-writer \
     libreoffice-calc \
     libreoffice-impress \
-    libreoffice-lang-en \
-    libreoffice-lang-pt-br \
+    fonts-dejavu \
+    fonts-liberation \
+    fonts-noto \
+    fonts-noto-cjk \
+    fonts-crosextra-carlito \
+    fonts-crosextra-caladea \
     fontconfig \
-    bash \
     curl \
-    tzdata \
     ca-certificates \
-    ttf-dejavu \
-    ttf-liberation \
-    font-noto \
-    font-noto-cjk \
-    msttcorefonts-installer
+    bash \
+    tzdata \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # ----------------------------------------------------------
-# Instala fontes Microsoft
-# (fundamental para DOCX não quebrar layout)
-# ----------------------------------------------------------
-RUN update-ms-fonts && fc-cache -f
-
-# ----------------------------------------------------------
-# Diretórios temporários para LibreOffice
-# evita lockfile/profile corruption
+# Diretórios temporários do LibreOffice
 # ----------------------------------------------------------
 RUN mkdir -p /tmp/libreoffice-profile && \
     mkdir -p /tmp/convert && \
@@ -48,31 +37,26 @@ RUN mkdir -p /tmp/libreoffice-profile && \
     chmod -R 777 /tmp
 
 # ----------------------------------------------------------
-# Ajustes de permissão do usuário node
+# Ajustes de permissões
 # ----------------------------------------------------------
 RUN mkdir -p /home/node/.config && \
-    chown -R node:node /home/node && \
-    chmod -R 755 /home/node
+    chown -R node:node /home/node
 
 # ----------------------------------------------------------
-# Variáveis importantes para Railway
+# Variáveis do LibreOffice
 # ----------------------------------------------------------
 ENV TZ=America/Sao_Paulo
-
 ENV HOME=/home/node
 ENV USER=node
 
-# evita erro de profile do libreoffice
+# evita profile lock do libreoffice
 ENV XDG_CONFIG_HOME=/tmp/libreoffice-profile
 
-# temp files
+# pasta temporária
 ENV TMPDIR=/tmp/convert
 
-# evita travamentos java/headless
+# headless estável
 ENV SAL_USE_VCLPLUGIN=gen
-
-# reduz logs inúteis
-ENV N8N_LOG_LEVEL=warn
 
 USER node
 
